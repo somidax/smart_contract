@@ -1,2 +1,2 @@
 # smart_contract
-smart_contract for coinEstate
+coinEstate smart_contract 
