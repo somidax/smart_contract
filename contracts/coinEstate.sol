@@ -1,13 +1,13 @@
 pragma solidity ^0.4.21;
 
-import "./Token.sol";
-import "./SafeMath.sol";
+import "./token.sol";
+import "./safeMath.sol";
 
 /**
- * @title ForkDelta
- * @dev This is the main contract for the ForkDelta exchange.
+ * @title coinEstate
+ * @dev This is the main contract for the coinEstate exchange.
  */
-contract ForkDelta {
+contract coinEstate {
   
   using SafeMath for uint;
 
@@ -34,7 +34,7 @@ contract ForkDelta {
   }
 
   /// Constructor function. This is only called on contract creation.
-  function ForkDelta(address admin_, address feeAccount_, uint feeMake_, uint feeTake_, uint freeUntilDate_) public {
+  function coinestate(address admin_, address feeAccount_, uint feeMake_, uint feeTake_, uint freeUntilDate_) public {
     admin = admin_;
     feeAccount = feeAccount_;
     feeMake = feeMake_;
