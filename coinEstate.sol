@@ -1,144 +1,216 @@
 pragma solidity 0.4.21;
 
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
+import "./token.sol";
 
-contract coinEstate {
-    // Public variables of the token
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-    uint256 public totalSupply;
 
-    // This creates an array with all balances
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
 
-    // This generates a public event on the blockchain that will notify clients
-    event Transfer(address indexed from, address indexed to, uint256 value);
+contract SafeMath {
+  function safeMul(uint a, uint b) internal returns (uint) {
+    uint c = a * b;
+    require(a == 0 || c / a == b);
+    return c;
+  }
 
-    // This notifies clients about the amount burnt
-    event Burn(address indexed from, uint256 value);
+  function safeSub(uint a, uint b) internal returns (uint) {
+    require(b <= a);
+    return a - b;
+  }
 
-    /**
-     * Constrctor function
-     *
-     * Initializes contract with initial supply tokens to the creator of the contract
-     */
-    function coinEstate(
-        uint256 initialSupply,
-        string tokenName,
-        uint8 decimalUnits,
-        string tokenSymbol
-    ) {
-        balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
-        totalSupply = initialSupply;                        // Update total supply
-        name = tokenName;                                   // Set the name for display purposes
-        symbol = tokenSymbol;                               // Set the symbol for display purposes
-        decimals = decimalUnits;                            // Amount of decimals for display purposes
+  function safeAdd(uint a, uint b) internal returns (uint) {
+    uint c = a + b;
+    require(c>=a && c>=b);
+    return c;
+  }
+
+ 
+  /// @return total amount of tokens
+  function totalSupply() public constant returns (uint256 supply) {}
+
+  /// @param _owner The address from which the balance will be retrieved
+  /// @return The balance
+  function balanceOf(address _owner) public constant returns (uint256 balance) {}
+
+  /// @notice send `_value` token to `_to` from `msg.sender`
+  /// @param _to The address of the recipient
+  /// @param _value The amount of token to be transferred
+  /// @return Whether the transfer was successful or not
+  function transfer(address _to, uint256 _value) public returns (bool success) {}
+
+  /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+  /// @param _from The address of the sender
+  /// @param _to The address of the recipient
+  /// @param _value The amount of token to be transferred
+  /// @return Whether the transfer was successful or not
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {}
+
+  /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
+  /// @param _spender The address of the account able to transfer the tokens
+  /// @param _value The amount of wei to be approved for transfer
+  /// @return Whether the approval was successful or not
+  function approve(address _spender, uint256 _value) public returns (bool success) {}
+
+  /// @param _owner The address of the account owning tokens
+  /// @param _spender The address of the account able to transfer the tokens
+  /// @return Amount of remaining tokens allowed to spent
+  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {}
+
+  event Transfer(address indexed _from, address indexed _to, uint256 _value);
+  event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+
+  uint public decimals;
+  string public name;
+}
+
+contract coinEstate is SafeMath {
+  address public admin; //the admin address
+  address public feeAccount; //the account that will receive fees
+  uint public feeMake; //percentage times (1 ether)
+  uint public feeTake; //percentage times (1 ether)
+  uint public freeUntilDate; //date in UNIX timestamp that trades will be free until
+  mapping (address => mapping (address => uint)) public tokens; //mapping of token addresses to mapping of account balances (token=0 means Ether)
+  mapping (address => mapping (bytes32 => bool)) public orders; //mapping of user accounts to mapping of order hashes to booleans (true = submitted by user, equivalent to offchain signature)
+  mapping (address => mapping (bytes32 => uint)) public orderFills; //mapping of user accounts to mapping of order hashes to uints (amount of order that has been filled)
+
+  event Order(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user);
+  event Cancel(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s);
+  event Trade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, address get, address give);
+  event Deposit(address token, address user, uint amount, uint balance);
+  event Withdraw(address token, address user, uint amount, uint balance);
+
+
+  modifier isAdmin() {
+      require(msg.sender == admin);
+      _;
+  }
+
+  function coinEstate(address admin_, address feeAccount_, uint feeMake_, uint feeTake_, uint freeUntilDate_) public {
+    admin = admin_;
+    feeAccount = feeAccount_;
+    feeMake = feeMake_;
+    feeTake = feeTake_;
+    freeUntilDate = freeUntilDate_;
+  }
+
+  function() public {
+    revert();
+  }
+
+  function changeAdmin(address admin_) public isAdmin {
+    admin = admin_;
+  }
+
+  function changeFeeAccount(address feeAccount_) public isAdmin {
+    feeAccount = feeAccount_;
+  }
+
+  function changeFeeMake(uint feeMake_) public isAdmin {
+    require (feeMake_ <= feeMake);
+    feeMake = feeMake_;
+  }
+
+  function changeFeeTake(uint feeTake_) public isAdmin {
+    require(feeTake_ <= feeTake);
+    feeTake = feeTake_;
+  }
+
+  function changeFreeUntilDate(uint freeUntilDate_) public isAdmin {
+    freeUntilDate = freeUntilDate_;
+  }
+
+  function deposit() public payable {
+    tokens[0][msg.sender] = safeAdd(tokens[0][msg.sender], msg.value);
+    Deposit(0, msg.sender, msg.value, tokens[0][msg.sender]);
+  }
+
+  function depositToken(address token, uint amount) public {
+    //remember to call Token(address).approve(this, amount) or this contract will not be able to do the transfer on your behalf.
+    require(token!=0);
+    require(transferFrom(msg.sender, this, amount));
+    tokens[token][msg.sender] = safeAdd(tokens[token][msg.sender], amount);
+    Deposit(token, msg.sender, amount, tokens[token][msg.sender]);
+  }
+
+  function withdraw(uint amount) {
+    if (tokens[0][msg.sender] < amount) revert;
+    tokens[0][msg.sender] = safeSub(tokens[0][msg.sender], amount);
+    if (!msg.sender.call.value(amount)()) revert;
+    Withdraw(0, msg.sender, amount, tokens[0][msg.sender]);
+  }
+
+  //support ERC223
+  function tokenFallback( address _origin, uint _value, bytes _data) public returns (bool ok) {
+      return true;
+  }
+
+  function balanceOf(address token, address user) public constant returns (uint) {
+    return tokens[token][user];
+  }
+
+  function order(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce) public {
+    bytes32 hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
+    orders[msg.sender][hash] = true;
+    Order(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, msg.sender);
+  }
+
+  function trade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount) public {
+    //amount is in amountGet terms
+    bytes32 hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
+    require((
+      (orders[user][hash] || ecrecover(keccak256("\x19Ethereum Signed Message:\n32", hash),v,r,s) == user) &&
+      block.number <= expires &&
+      safeAdd(orderFills[user][hash], amount) <= amountGet
+    ));
+    tradeBalances(tokenGet, amountGet, tokenGive, amountGive, user, amount);
+    orderFills[user][hash] = safeAdd(orderFills[user][hash], amount);
+    Trade(tokenGet, amount, tokenGive, amountGive * amount / amountGet, user, msg.sender);
+  }
+
+  function tradeBalances(address tokenGet, uint amountGet, address tokenGive, uint amountGive, address user, uint amount) private {
+    
+    //trades are free until this date in UNIX timestamp
+    uint feeMakeXfer = 0;
+    uint feeTakeXfer = 0;
+    if (now >= freeUntilDate) {
+      feeMakeXfer = safeMul(amount, feeMake) / (1 ether);
+      feeTakeXfer = safeMul(amount, feeTake) / (1 ether);
     }
+    
+    tokens[tokenGet][msg.sender] = safeSub(tokens[tokenGet][msg.sender], safeAdd(amount, feeTakeXfer));
+    tokens[tokenGet][user] = safeAdd(tokens[tokenGet][user], safeSub(amount, feeMakeXfer));
+    tokens[tokenGet][feeAccount] = safeAdd(tokens[tokenGet][feeAccount], safeAdd(feeMakeXfer, feeTakeXfer));
+    tokens[tokenGive][user] = safeSub(tokens[tokenGive][user], safeMul(amountGive, amount) / amountGet);
+    tokens[tokenGive][msg.sender] = safeAdd(tokens[tokenGive][msg.sender], safeMul(amountGive, amount) / amountGet);
+  }
 
-    /**
-     * Internal transfer, only can be called by this contract
-     */
-    function _transfer(address _from, address _to, uint _value) internal {
-        require(_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
-        require(balanceOf[_from] >= _value);                // Check if the sender has enough
-        require(balanceOf[_to] + _value > balanceOf[_to]); // Check for overflows
-        balanceOf[_from] -= _value;                         // Subtract from the sender
-        balanceOf[_to] += _value;                           // Add the same to the recipient
-        Transfer(_from, _to, _value);
-    }
+  function testTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount, address sender) public constant returns(bool) {
+    if (!(
+      tokens[tokenGet][sender] >= amount &&
+      availableVolume(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user, v, r, s) >= amount
+    )) return false;
+    return true;
+  }
 
-    /**
-     * Transfer tokens
-     *
-     * Send `_value` tokens to `_to` from your account
-     *
-     * @param _to The address of the recipient
-     * @param _value the amount to send
-     */
-    function transfer(address _to, uint256 _value) {
-        _transfer(msg.sender, _to, _value);
-    }
+  function availableVolume(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s) public constant returns(uint) {
+    bytes32 hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
+    if (!(
+      (orders[user][hash] || ecrecover(keccak256("\x19Ethereum Signed Message:\n32", hash),v,r,s) == user) &&
+      block.number <= expires
+    )) return 0;
+    uint available1 = safeSub(amountGet, orderFills[user][hash]);
+    uint available2 = safeMul(tokens[tokenGive][user], amountGet) / amountGive;
+    if (available1<available2) return available1;
+    return available2;
+  }
 
-    /**
-     * Transfer tokens from other address
-     *
-     * Send `_value` tokens to `_to` in behalf of `_from`
-     *
-     * @param _from The address of the sender
-     * @param _to The address of the recipient
-     * @param _value the amount to send
-     */
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        require(_value <= allowance[_from][msg.sender]);     // Check allowance
-        allowance[_from][msg.sender] -= _value;
-        _transfer(_from, _to, _value);
-        return true;
-    }
+  function amountFilled(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s) public constant returns(uint) {
+    bytes32 hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
+    return orderFills[user][hash];
+  }
 
-    /**
-     * Set allowance for other address
-     *
-     * Allows `_spender` to spend no more than `_value` tokens in your behalf
-     *
-     * @param _spender The address authorized to spend
-     * @param _value the max amount they can spend
-     */
-    function approve(address _spender, uint256 _value)
-        returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
-        return true;
-    }
-
-    /**
-     * Set allowance for other address and notify
-     *
-     * Allows `_spender` to spend no more than `_value` tokens in your behalf, and then ping the contract about it
-     *
-     * @param _spender The address authorized to spend
-     * @param _value the max amount they can spend
-     * @param _extraData some extra information to send to the approved contract
-     */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
-        returns (bool success) {
-        tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
-        }
-    }
-
-    /**
-     * Destroy tokens
-     *
-     * Remove `_value` tokens from the system irreversibly
-     *
-     * @param _value the amount of money to burn
-     */
-    function burn(uint256 _value) returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-        balanceOf[msg.sender] -= _value;            // Subtract from the sender
-        totalSupply -= _value;                      // Updates totalSupply
-        Burn(msg.sender, _value);
-        return true;
-    }
-
-    /**
-     * Destroy tokens from other account
-     *
-     * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
-     *
-     * @param _from the address of the sender
-     * @param _value the amount of money to burn
-     */
-    function burnFrom(address _from, uint256 _value) returns (bool success) {
-        require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
-        require(_value <= allowance[_from][msg.sender]);    // Check allowance
-        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
-        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
-        totalSupply -= _value;                              // Update totalSupply
-        Burn(_from, _value);
-        return true;
-    }
+  function cancelOrder(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, uint8 v, bytes32 r, bytes32 s) public {
+    bytes32 hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
+    require ((orders[msg.sender][hash] || ecrecover(keccak256("\x19Ethereum Signed Message:\n32", hash),v,r,s) == msg.sender));
+    orderFills[msg.sender][hash] = amountGet;
+    Cancel(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, msg.sender, v, r, s);
+  }
 }
