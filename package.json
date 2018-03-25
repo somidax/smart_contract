@@ -4,7 +4,7 @@
   "license": "GPL-3.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/somidax/smart_contract"
+    "url": "https://github.com/somidax/smart_contract/blob/master/coinEstate.sol"
   },
   "require": [
     "babel-register",
