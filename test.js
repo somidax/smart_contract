@@ -17,7 +17,7 @@ const logger = {
     if (false) console.log(message);
   } };
 
-config.contractRyxEx = 'ryxex.sol';
+config.contractcoinEstate = 'coinEstate.sol';
 
 const compiledSources = {};
 function deploy(web3, sourceFile, contractName, constructorParams, address, callback) {
@@ -57,11 +57,11 @@ describe('Test', function test() {
   const port = 12345;
   let server;
   let accounts;
-  let contractRyxEx;
+  let contractcoinEstate;
   let contractToken1;
   let contractToken2;
   let contractAccountLevels;
-  let contractRyxExAddr;
+  let contractcoinEstateAddr;
   let contractToken1Addr;
   let contractToken2Addr;
   let contractAccountLevelsAddr;
@@ -97,35 +97,35 @@ describe('Test', function test() {
 
   describe('Contract scenario', () => {
     it('Should add a token1 contract to the network', (done) => {
-      deploy(web3, config.contractRyxEx, 'ReserveToken', [], accounts[0], (err, contract) => {
+      deploy(web3, config.contractcoinEstate, 'ReserveToken', [], accounts[0], (err, contract) => {
         contractToken1 = contract.contract;
         contractToken1Addr = contract.addr;
         done();
       });
     });
     it('Should add a token2 contract to the network', (done) => {
-      deploy(web3, config.contractRyxEx, 'ReserveToken', [], accounts[0], (err, contract) => {
+      deploy(web3, config.contractcoinEstate, 'ReserveToken', [], accounts[0], (err, contract) => {
         contractToken2 = contract.contract;
         contractToken2Addr = contract.addr;
         done();
       });
     });
     it('Should add an AccountLevels contract to the network', (done) => {
-      deploy(web3, config.contractRyxEx, 'AccountLevelsTest', [], accounts[0], (err, contract) => {
+      deploy(web3, config.contractcoinEstate, 'AccountLevelsTest', [], accounts[0], (err, contract) => {
         contractAccountLevels = contract.contract;
         contractAccountLevelsAddr = contract.addr;
         done();
       });
     });
-    it('Should add the RyxEx contract to the network', (done) => {
+    it('Should add the coinEstate contract to the network', (done) => {
       feeMake = new BigNumber(utility.ethToWei(0.0005));
       feeTake = new BigNumber(utility.ethToWei(0.003));
       feeRebate = new BigNumber(utility.ethToWei(0.002));
       admin = accounts[0];
       feeAccount = accounts[0];
-      deploy(web3, config.contractRyxEx, 'RyxEx', [admin, feeAccount, contractAccountLevelsAddr, feeMake, feeTake, feeRebate], accounts[0], (err, contract) => {
-        contractRyxEx = contract.contract;
-        contractRyxExAddr = contract.addr;
+      deploy(web3, config.contractcoinEstate, 'coinEstate', [admin, feeAccount, contractAccountLevelsAddr, feeMake, feeTake, feeRebate], accounts[0], (err, contract) => {
+        contractcoinEstate = contract.contract;
+        contractcoinEstateAddr = contract.addr;
         done();
       });
     });
@@ -145,22 +145,22 @@ describe('Test', function test() {
           done();
         });
     });
-    it('Should add funds to ryxex', (done) => {
+    it('Should add funds to coinEstate', (done) => {
       function addEtherFunds(amount, account, callback) {
-        utility.testSend(web3, contractRyxEx, contractRyxExAddr, 'deposit', [{ gas: 1000000, value: amount }], account, undefined, 0, (err) => {
+        utility.testSend(web3, contractcoinEstate, contractcoinEstateAddr, 'deposit', [{ gas: 1000000, value: amount }], account, undefined, 0, (err) => {
           assert.equal(err, undefined);
-          utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'balanceOf', [0, account], (err2, result) => {
+          utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'balanceOf', [0, account], (err2, result) => {
             assert.equal(result.equals(amount), true);
             callback();
           });
         });
       }
       function addFunds(amount, contractToken, contractTokenAddr, account, callback) {
-        utility.testSend(web3, contractToken, contractTokenAddr, 'approve', [contractRyxExAddr, amount, { gas: 1000000, value: 0 }], account, undefined, 0, (err) => {
+        utility.testSend(web3, contractToken, contractTokenAddr, 'approve', [contractcoinEstateAddr, amount, { gas: 1000000, value: 0 }], account, undefined, 0, (err) => {
           assert.equal(err, undefined);
-          utility.testSend(web3, contractRyxEx, contractRyxExAddr, 'depositToken', [contractTokenAddr, amount, { gas: 1000000, value: 0 }], account, undefined, 0, (err2) => {
+          utility.testSend(web3, contractcoinEstate, contractcoinEstateAddr, 'depositToken', [contractTokenAddr, amount, { gas: 1000000, value: 0 }], account, undefined, 0, (err2) => {
             assert.equal(err2, undefined);
-            utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'balanceOf', [contractTokenAddr, account], (err3, result) => {
+            utility.testCall(web3, contractcoinEstate, contractcoinestateAddr, 'balanceOf', [contractTokenAddr, account], (err3, result) => {
               assert.equal(result.equals(amount), true);
               callback();
             });
@@ -192,24 +192,24 @@ describe('Test', function test() {
             assert.equal(err2, undefined);
             utility.testCall(web3, contractAccountLevels, contractAccountLevelsAddr, 'accountLevel', [account1], (err3, level) => {
               assert.equal(err3, undefined);
-              utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'balanceOf', [contractToken1Addr, feeAccount], (err4, initialFeeBalance1) => {
-                utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'balanceOf', [contractToken2Addr, feeAccount], (err5, initialFeeBalance2) => {
-                  utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'balanceOf', [contractToken1Addr, account1], (err6, initialBalance11) => {
-                    utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'balanceOf', [contractToken1Addr, account2], (err7, initialBalance12) => {
-                      utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'balanceOf', [contractToken2Addr, account1], (err8, initialBalance21) => {
-                        utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'balanceOf', [contractToken2Addr, account2], (err9, initialBalance22) => {
-                          utility.testSend(web3, contractRyxEx, contractRyxExAddr, 'order', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, { gas: 1000000, value: 0 }], account1, undefined, 0, (err10) => {
+              utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'balanceOf', [contractToken1Addr, feeAccount], (err4, initialFeeBalance1) => {
+                utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'balanceOf', [contractToken2Addr, feeAccount], (err5, initialFeeBalance2) => {
+                  utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'balanceOf', [contractToken1Addr, account1], (err6, initialBalance11) => {
+                    utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'balanceOf', [contractToken1Addr, account2], (err7, initialBalance12) => {
+                      utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'balanceOf', [contractToken2Addr, account1], (err8, initialBalance21) => {
+                        utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'balanceOf', [contractToken2Addr, account2], (err9, initialBalance22) => {
+                          utility.testSend(web3, contractcoinEstate, contractcoinEstateAddr, 'order', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, { gas: 1000000, value: 0 }], account1, undefined, 0, (err10) => {
                             assert.equal(err10, undefined);
-                            utility.testSend(web3, contractRyxEx, contractRyxExAddr, 'trade', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, account1, 0, '0x0', '0x0', amount, { gas: 1000000, value: 0 }], account2, undefined, 0, (err11) => {
+                            utility.testSend(web3, contractcoinEstate, contractcoinEstateAddr, 'trade', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, account1, 0, '0x0', '0x0', amount, { gas: 1000000, value: 0 }], account2, undefined, 0, (err11) => {
                               assert.equal(err11, undefined);
-                              utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'balanceOf', [contractToken1Addr, feeAccount], (err12, feeBalance1) => {
-                                utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'balanceOf', [contractToken2Addr, feeAccount], (err13, feeBalance2) => {
-                                  utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'balanceOf', [contractToken1Addr, account1], (err14, balance11) => {
-                                    utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'balanceOf', [contractToken1Addr, account2], (err15, balance12) => {
-                                      utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'balanceOf', [contractToken2Addr, account1], (err16, balance21) => {
-                                        utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'balanceOf', [contractToken2Addr, account2], (err17, balance22) => {
-                                          utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'availableVolume', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, account1, 0, '0x0', '0x0'], (err18, availableVolume) => {
-                                            utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'amountFilled', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, account1, 0, '0x0', '0x0'], (err19, amountFilled) => {
+                              utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'balanceOf', [contractToken1Addr, feeAccount], (err12, feeBalance1) => {
+                                utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'balanceOf', [contractToken2Addr, feeAccount], (err13, feeBalance2) => {
+                                  utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'balanceOf', [contractToken1Addr, account1], (err14, balance11) => {
+                                    utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'balanceOf', [contractToken1Addr, account2], (err15, balance12) => {
+                                      utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'balanceOf', [contractToken2Addr, account1], (err16, balance21) => {
+                                        utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'balanceOf', [contractToken2Addr, account2], (err17, balance22) => {
+                                          utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'availableVolume', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, account1, 0, '0x0', '0x0'], (err18, availableVolume) => {
+                                            utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'amountFilled', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, account1, 0, '0x0', '0x0'], (err19, amountFilled) => {
                                               const feeMakeXfer = amount.times(feeMake).divToInt(unit);
                                               const feeTakeXfer = amount.times(feeTake).divToInt(unit);
                                               let feeRebateXfer = 0;
@@ -299,29 +299,29 @@ describe('Test', function test() {
         web3.eth.getBlockNumber((err, blockNumber) => {
           if (err) callback(err);
           expires += blockNumber;
-          const condensed = utility.pack([contractRyxExAddr, tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce], [160, 160, 256, 160, 256, 256, 256]);
+          const condensed = utility.pack([contractcoinEstateAddr, tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce], [160, 160, 256, 160, 256, 256, 256]);
           const hash = sha256(new Buffer(condensed, 'hex'));
           utility.testSend(web3, contractAccountLevels, contractAccountLevelsAddr, 'setAccountLevel', [account1, accountLevel, { gas: 1000000, value: 0 }], account1, undefined, 0, (err2) => {
             assert.equal(err2, undefined);
             utility.testCall(web3, contractAccountLevels, contractAccountLevelsAddr, 'accountLevel', [account1], (err3, level) => {
               assert.equal(err3, undefined);
-              utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'balanceOf', [contractToken1Addr, feeAccount], (err4, initialFeeBalance1) => {
-                utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'balanceOf', [contractToken2Addr, feeAccount], (err5, initialFeeBalance2) => {
-                  utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'balanceOf', [contractToken1Addr, account1], (err6, initialBalance11) => {
-                    utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'balanceOf', [contractToken1Addr, account2], (err7, initialBalance12) => {
-                      utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'balanceOf', [contractToken2Addr, account1], (err8, initialBalance21) => {
-                        utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'balanceOf', [contractToken2Addr, account2], (err9, initialBalance22) => {
+              utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'balanceOf', [contractToken1Addr, feeAccount], (err4, initialFeeBalance1) => {
+                utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'balanceOf', [contractToken2Addr, feeAccount], (err5, initialFeeBalance2) => {
+                  utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'balanceOf', [contractToken1Addr, account1], (err6, initialBalance11) => {
+                    utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'balanceOf', [contractToken1Addr, account2], (err7, initialBalance12) => {
+                      utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'balanceOf', [contractToken2Addr, account1], (err8, initialBalance21) => {
+                        utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'balanceOf', [contractToken2Addr, account2], (err9, initialBalance22) => {
                           utility.sign(web3, account1, hash, undefined, (err10, sig) => {
-                            utility.testSend(web3, contractRyxEx, contractRyxExAddr, 'trade', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, account1, sig.v, sig.r, sig.s, amount, { gas: 1000000, value: 0 }], account2, undefined, 0, (err11) => {
+                            utility.testSend(web3, contractcoinEstate, contractcoinEstateAddr, 'trade', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, account1, sig.v, sig.r, sig.s, amount, { gas: 1000000, value: 0 }], account2, undefined, 0, (err11) => {
                               assert.equal(err11, undefined);
-                              utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'balanceOf', [contractToken1Addr, feeAccount], (err12, feeBalance1) => {
-                                utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'balanceOf', [contractToken2Addr, feeAccount], (err13, feeBalance2) => {
-                                  utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'balanceOf', [contractToken1Addr, account1], (err14, balance11) => {
-                                    utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'balanceOf', [contractToken1Addr, account2], (err15, balance12) => {
-                                      utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'balanceOf', [contractToken2Addr, account1], (err16, balance21) => {
-                                        utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'balanceOf', [contractToken2Addr, account2], (err17, balance22) => {
-                                          utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'availableVolume', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, account1, sig.v, sig.r, sig.s], (err18, availableVolume) => {
-                                            utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'amountFilled', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, account1, sig.v, sig.r, sig.s], (err19, amountFilled) => {
+                              utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'balanceOf', [contractToken1Addr, feeAccount], (err12, feeBalance1) => {
+                                utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'balanceOf', [contractToken2Addr, feeAccount], (err13, feeBalance2) => {
+                                  utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'balanceOf', [contractToken1Addr, account1], (err14, balance11) => {
+                                    utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'balanceOf', [contractToken1Addr, account2], (err15, balance12) => {
+                                      utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'balanceOf', [contractToken2Addr, account1], (err16, balance21) => {
+                                        utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'balanceOf', [contractToken2Addr, account2], (err17, balance22) => {
+                                          utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'availableVolume', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, account1, sig.v, sig.r, sig.s], (err18, availableVolume) => {
+                                            utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'amountFilled', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, account1, sig.v, sig.r, sig.s], (err19, amountFilled) => {
                                               const feeMakeXfer = amount.times(feeMake).divToInt(unit);
                                               const feeTakeXfer = amount.times(feeTake).divToInt(unit);
                                               let feeRebateXfer = 0;
@@ -411,17 +411,17 @@ describe('Test', function test() {
         web3.eth.getBlockNumber((err, blockNumber) => {
           if (err) callback(err);
           expires += blockNumber;
-          utility.testSend(web3, contractRyxEx, contractRyxExAddr, 'order', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, { gas: 1000000, value: 0 }], account1, undefined, 0, (err2) => {
+          utility.testSend(web3, contractcoinEstate, contractcoinEstateAddr, 'order', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, { gas: 1000000, value: 0 }], account1, undefined, 0, (err2) => {
             assert.equal(err2, undefined);
-            utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'availableVolume', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, account1, 0, '0x0', '0x0'], (err3, result3) => {
+            utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'availableVolume', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, account1, 0, '0x0', '0x0'], (err3, result3) => {
               assert.equal(result3.equals(amountGet), true);
-              utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'amountFilled', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, account1, 0, '0x0', '0x0'], (err4, result4) => {
+              utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'amountFilled', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, account1, 0, '0x0', '0x0'], (err4, result4) => {
                 assert.equal(result4.equals(new BigNumber(0)), true);
-                utility.testSend(web3, contractRyxEx, contractRyxExAddr, 'cancelOrder', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, 0, '0x0', '0x0', { gas: 1000000, value: 0 }], account1, undefined, 0, (err5) => {
+                utility.testSend(web3, contractcoinEstate, contractcoinEstateAddr, 'cancelOrder', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, 0, '0x0', '0x0', { gas: 1000000, value: 0 }], account1, undefined, 0, (err5) => {
                   assert.equal(err5, undefined);
-                  utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'availableVolume', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, account1, 0, '0x0', '0x0'], (err6, result6) => {
+                  utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'availableVolume', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, account1, 0, '0x0', '0x0'], (err6, result6) => {
                     assert.equal(result6.equals(new BigNumber(0)), true);
-                    utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'amountFilled', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, account1, 0, '0x0', '0x0'], (err7, result7) => {
+                    utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'amountFilled', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, account1, 0, '0x0', '0x0'], (err7, result7) => {
                       assert.equal(result7.equals(amountGet), true);
                       callback();
                     });
@@ -470,18 +470,18 @@ describe('Test', function test() {
         web3.eth.getBlockNumber((err, blockNumber) => {
           if (err) callback(err);
           expires += blockNumber;
-          const condensed = utility.pack([contractRyxExAddr, tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce], [160, 160, 256, 160, 256, 256, 256]);
+          const condensed = utility.pack([contractcoinEstateAddr, tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce], [160, 160, 256, 160, 256, 256, 256]);
           const hash = sha256(new Buffer(condensed, 'hex'));
           utility.sign(web3, account1, hash, undefined, (err2, sig) => {
-            utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'availableVolume', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, account1, sig.v, sig.r, sig.s], (err3, result3) => {
+            utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'availableVolume', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, account1, sig.v, sig.r, sig.s], (err3, result3) => {
               assert.equal(result3.equals(amountGet), true);
-              utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'amountFilled', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, account1, sig.v, sig.r, sig.s], (err4, result4) => {
+              utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'amountFilled', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, account1, sig.v, sig.r, sig.s], (err4, result4) => {
                 assert.equal(result4.equals(new BigNumber(0)), true);
-                utility.testSend(web3, contractRyxEx, contractRyxExAddr, 'cancelOrder', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, sig.v, sig.r, sig.s, { gas: 1000000, value: 0 }], account1, undefined, 0, (err5) => {
+                utility.testSend(web3, contractcoinEstate, contractcoinEstateAddr, 'cancelOrder', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, sig.v, sig.r, sig.s, { gas: 1000000, value: 0 }], account1, undefined, 0, (err5) => {
                   assert.equal(err5, undefined);
-                  utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'availableVolume', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, account1, sig.v, sig.r, sig.s], (err6, result6) => {
+                  utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'availableVolume', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, account1, sig.v, sig.r, sig.s], (err6, result6) => {
                     assert.equal(result6.equals(new BigNumber(0)), true);
-                    utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'amountFilled', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, account1, sig.v, sig.r, sig.s], (err7, result7) => {
+                    utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'amountFilled', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, account1, sig.v, sig.r, sig.s], (err7, result7) => {
                       assert.equal(result7.equals(amountGet), true);
                       callback();
                     });
@@ -534,13 +534,13 @@ describe('Test', function test() {
         const expires = blockNumber + 1000;
         const orderNonce = 11;
         const user = accounts[1];
-        const condensed = utility.pack([contractRyxExAddr, tokenGet, amountGet.toNumber(), tokenGive, amountGive.toNumber(), expires, orderNonce], [160, 160, 256, 160, 256, 256, 256]);
+        const condensed = utility.pack([contractcoinEstateAddr, tokenGet, amountGet.toNumber(), tokenGive, amountGive.toNumber(), expires, orderNonce], [160, 160, 256, 160, 256, 256, 256]);
         const hash = sha256(new Buffer(condensed, 'hex'));
         const amount = amountGet.div(new BigNumber(2));
         utility.sign(web3, user, hash, undefined, (err2, sig) => {
-          utility.testSend(web3, contractRyxEx, contractRyxExAddr, 'trade', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, user, sig.v, sig.r, sig.s, amount, { gas: 1000000, value: 0 }], accounts[2], undefined, 0, (err3) => {
+          utility.testSend(web3, contractcoinEstate, contractcoinEstateAddr, 'trade', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, user, sig.v, sig.r, sig.s, amount, { gas: 1000000, value: 0 }], accounts[2], undefined, 0, (err3) => {
             assert.equal(err3, undefined);
-            utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'availableVolume', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, user, sig.v, sig.r, sig.s], (err4, result4) => {
+            utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'availableVolume', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, user, sig.v, sig.r, sig.s], (err4, result4) => {
               assert.equal(result4.equals(amountGet.minus(amount)), true);
               done();
             });
@@ -558,13 +558,13 @@ describe('Test', function test() {
         const expires = blockNumber + 1000;
         const orderNonce = 12;
         const user = accounts[1];
-        const condensed = utility.pack([contractRyxExAddr, tokenGet, amountGet.toNumber(), tokenGive, amountGive.toNumber(), expires, orderNonce], [160, 160, 256, 160, 256, 256, 256]);
+        const condensed = utility.pack([contractcoinEstateAddr, tokenGet, amountGet.toNumber(), tokenGive, amountGive.toNumber(), expires, orderNonce], [160, 160, 256, 160, 256, 256, 256]);
         const hash = sha256(new Buffer(condensed, 'hex'));
         const amount = amountGet.div(new BigNumber(2));
         utility.sign(web3, user, hash, undefined, (err2, sig) => {
-          utility.testSend(web3, contractRyxEx, contractRyxExAddr, 'trade', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, user, sig.v, sig.r, sig.s, amount, { gas: 1000000, value: 0 }], accounts[1], undefined, 0, (err3) => {
+          utility.testSend(web3, contractcoinEstate, contractcoinEstateAddr, 'trade', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, user, sig.v, sig.r, sig.s, amount, { gas: 1000000, value: 0 }], accounts[1], undefined, 0, (err3) => {
             assert.equal(err3, undefined);
-            utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'availableVolume', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, user, sig.v, sig.r, sig.s], (err4, result4) => {
+            utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'availableVolume', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, user, sig.v, sig.r, sig.s], (err4, result4) => {
               assert.equal(result4.equals(amountGet.minus(amount)), true);
               done();
             });
@@ -582,9 +582,9 @@ describe('Test', function test() {
             assert.equal(err2, undefined);
             utility.testCall(web3, contractAccountLevels, contractAccountLevelsAddr, 'accountLevel', [account1], (err3) => {
               assert.equal(err3, undefined);
-              utility.testSend(web3, contractRyxEx, contractRyxExAddr, 'order', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, { gas: 1000000, value: 0 }], account1, undefined, 0, (err4) => {
+              utility.testSend(web3, contractcoinEstate, contractcoinEstateAddr, 'order', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, { gas: 1000000, value: 0 }], account1, undefined, 0, (err4) => {
                 assert.equal(err4, undefined);
-                utility.testSend(web3, contractRyxEx, contractRyxExAddr, 'trade', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, account1, 0, '0x0', '0x0', amount, { gas: 1000000, value: 0 }], account2, undefined, 0, (err5) => {
+                utility.testSend(web3, contractcoinEstate, contractcoinEstateAddr, 'trade', [tokenGet, amountGet, tokenGive, amountGive, expires, orderNonce, account1, 0, '0x0', '0x0', amount, { gas: 1000000, value: 0 }], account2, undefined, 0, (err5) => {
                   assert.equal(!err5, false);
                   callback();
                 });
@@ -595,10 +595,10 @@ describe('Test', function test() {
       }
       const account1 = accounts[1];
       const account2 = accounts[2];
-      utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'balanceOf', [contractToken1Addr, account1], () => {
-        utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'balanceOf', [contractToken1Addr, account2], (err2, initialBalance12) => {
-          utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'balanceOf', [contractToken2Addr, account1], (err3, initialBalance21) => {
-            utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'balanceOf', [contractToken2Addr, account2], () => {
+      utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'balanceOf', [contractToken1Addr, account1], () => {
+        utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'balanceOf', [contractToken1Addr, account2], (err2, initialBalance12) => {
+          utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'balanceOf', [contractToken2Addr, account1], (err3, initialBalance21) => {
+            utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'balanceOf', [contractToken2Addr, account2], () => {
               const trades = [
                 // try to trade more than available size
                 {
@@ -656,11 +656,11 @@ describe('Test', function test() {
     });
     it('Should do a token withdrawal', (done) => {
       const amount = new BigNumber(utility.ethToWei(100));
-      utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'balanceOf', [contractToken1Addr, accounts[1]], (err, initialBalance) => {
+      utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'balanceOf', [contractToken1Addr, accounts[1]], (err, initialBalance) => {
         utility.testCall(web3, contractToken1, contractToken1Addr, 'balanceOf', [accounts[1]], (err2, initialTokenBalance) => {
-          utility.testSend(web3, contractRyxEx, contractRyxExAddr, 'withdrawToken', [contractToken1Addr, amount, { gas: 1000000, value: 0 }], accounts[1], undefined, 0, (err3) => {
+          utility.testSend(web3, contractcoinEstate, contractcoinEstateAddr, 'withdrawToken', [contractToken1Addr, amount, { gas: 1000000, value: 0 }], accounts[1], undefined, 0, (err3) => {
             assert.equal(err3, undefined);
-            utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'balanceOf', [contractToken1Addr, accounts[1]], (err4, finalBalance) => {
+            utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'balanceOf', [contractToken1Addr, accounts[1]], (err4, finalBalance) => {
               utility.testCall(web3, contractToken1, contractToken1Addr, 'balanceOf', [accounts[1]], (err5, finalTokenBalance) => {
                 utility.testCall(web3, contractToken1, contractToken1Addr, 'balanceOf', [accounts[1]], () => {
                   assert.equal(finalBalance.equals(initialBalance.sub(amount)), true);
@@ -675,12 +675,12 @@ describe('Test', function test() {
     });
     it('Should do an Ether withdrawal', (done) => {
       const amount = new BigNumber(utility.ethToWei(100));
-      utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'balanceOf', [0, accounts[1]], (err, initialBalance) => {
-        web3.eth.getBalance(contractRyxExAddr, (err2, initialEtherBalance) => {
-          utility.testSend(web3, contractRyxEx, contractRyxExAddr, 'withdraw', [amount, { gas: 1000000, value: 0 }], accounts[1], undefined, 0, (err3) => {
+      utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'balanceOf', [0, accounts[1]], (err, initialBalance) => {
+        web3.eth.getBalance(contractcoinEstateAddr, (err2, initialEtherBalance) => {
+          utility.testSend(web3, contractcoinEstate, contractcoinEstateAddr, 'withdraw', [amount, { gas: 1000000, value: 0 }], accounts[1], undefined, 0, (err3) => {
             assert.equal(err3, undefined);
-            utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'balanceOf', [0, accounts[1]], (err4, finalBalance) => {
-              web3.eth.getBalance(contractRyxExAddr, (err5, finalEtherBalance) => {
+            utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'balanceOf', [0, accounts[1]], (err4, finalBalance) => {
+              web3.eth.getBalance(contractcoinEstateAddr, (err5, finalEtherBalance) => {
                 assert.equal(finalBalance.equals(initialBalance.sub(amount)), true);
                 assert.equal(finalEtherBalance.equals(initialEtherBalance.sub(amount)), true);
                 done();
@@ -691,51 +691,51 @@ describe('Test', function test() {
       });
     });
     it('Should change the account levels address and fail', (done) => {
-      utility.testSend(web3, contractRyxEx, contractRyxExAddr, 'changeAccountLevelsAddr', ['0x0', { gas: 1000000, value: 0 }], accounts[1], undefined, 0, (err) => {
+      utility.testSend(web3, contractcoinEstate, contractcoinEstateAddr, 'changeAccountLevelsAddr', ['0x0', { gas: 1000000, value: 0 }], accounts[1], undefined, 0, (err) => {
         assert.equal(!err, false);
         done();
       });
     });
     it('Should change the account levels address and succeed', (done) => {
-      utility.testSend(web3, contractRyxEx, contractRyxExAddr, 'changeAccountLevelsAddr', ['0x0', { gas: 1000000, value: 0 }], admin, undefined, 0, (err) => {
+      utility.testSend(web3, contractcoinEstate, contractcoinEstateAddr, 'changeAccountLevelsAddr', ['0x0', { gas: 1000000, value: 0 }], admin, undefined, 0, (err) => {
         assert.equal(err, undefined);
-        utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'accountLevelsAddr', [], (err2, result2) => {
+        utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'accountLevelsAddr', [], (err2, result2) => {
           assert.equal(result2 === '0x0000000000000000000000000000000000000000', true);
           done();
         });
       });
     });
     it('Should change the fee account and fail', (done) => {
-      utility.testSend(web3, contractRyxEx, contractRyxExAddr, 'changeFeeAccount', ['0x0', { gas: 1000000, value: 0 }], accounts[1], undefined, 0, (err) => {
+      utility.testSend(web3, contractcoinEstate, contractcoinEstateAddr, 'changeFeeAccount', ['0x0', { gas: 1000000, value: 0 }], accounts[1], undefined, 0, (err) => {
         assert.equal(!err, false);
         done();
       });
     });
     it('Should change the fee account and succeed', (done) => {
-      utility.testSend(web3, contractRyxEx, contractRyxExAddr, 'changeFeeAccount', [accounts[1], { gas: 1000000, value: 0 }], admin, undefined, 0, (err) => {
+      utility.testSend(web3, contractcoinEstate, contractcoinEstateAddr, 'changeFeeAccount', [accounts[1], { gas: 1000000, value: 0 }], admin, undefined, 0, (err) => {
         assert.equal(err, undefined);
-        utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'feeAccount', [], (err2, result2) => {
+        utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'feeAccount', [], (err2, result2) => {
           assert.equal(result2 === accounts[1], true);
           done();
         });
       });
     });
     it('Should change the make fee and fail', (done) => {
-      utility.testSend(web3, contractRyxEx, contractRyxExAddr, 'changeFeeMake', [feeMake, { gas: 1000000, value: 0 }], accounts[1], undefined, 0, (err) => {
+      utility.testSend(web3, contractcoinEstate, contractcoinEstateAddr, 'changeFeeMake', [feeMake, { gas: 1000000, value: 0 }], accounts[1], undefined, 0, (err) => {
         assert.equal(!err, false);
         done();
       });
     });
     it('Should change the make fee and fail because the make fee can only decrease', (done) => {
-      utility.testSend(web3, contractRyxEx, contractRyxExAddr, 'changeFeeMake', [feeMake.mul(2), { gas: 1000000, value: 0 }], accounts[1], undefined, 0, (err) => {
+      utility.testSend(web3, contractcoinEstate, contractcoinEstateAddr, 'changeFeeMake', [feeMake.mul(2), { gas: 1000000, value: 0 }], accounts[1], undefined, 0, (err) => {
         assert.equal(!err, false);
         done();
       });
     });
     it('Should change the make fee and succeed', (done) => {
-      utility.testSend(web3, contractRyxEx, contractRyxExAddr, 'changeFeeMake', [feeMake.div(2), { gas: 1000000, value: 0 }], admin, undefined, 0, (err) => {
+      utility.testSend(web3, contractcoinEstate, contractcoinEstateAddr, 'changeFeeMake', [feeMake.div(2), { gas: 1000000, value: 0 }], admin, undefined, 0, (err) => {
         assert.equal(err, undefined);
-        utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'feeMake', [], (err2, result2) => {
+        utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'feeMake', [], (err2, result2) => {
           assert.equal(result2.equals(feeMake.div(2)), true);
           feeMake = result2;
           done();
@@ -743,27 +743,27 @@ describe('Test', function test() {
       });
     });
     it('Should change the take fee and fail', (done) => {
-      utility.testSend(web3, contractRyxEx, contractRyxExAddr, 'changeFeeTake', [feeTake, { gas: 1000000, value: 0 }], accounts[1], undefined, 0, (err) => {
+      utility.testSend(web3, contractcoinEstate, contractcoinEstateAddr, 'changeFeeTake', [feeTake, { gas: 1000000, value: 0 }], accounts[1], undefined, 0, (err) => {
         assert.equal(!err, false);
         done();
       });
     });
     it('Should change the take fee and fail because the take fee can only decrease', (done) => {
-      utility.testSend(web3, contractRyxEx, contractRyxExAddr, 'changeFeeTake', [feeTake.mul(2), { gas: 1000000, value: 0 }], accounts[1], undefined, 0, (err) => {
+      utility.testSend(web3, contractcoinEstate, contractcoinEstateAddr, 'changeFeeTake', [feeTake.mul(2), { gas: 1000000, value: 0 }], accounts[1], undefined, 0, (err) => {
         assert.equal(!err, false);
         done();
       });
     });
     it('Should change the take fee and fail because the take fee must exceed the rebate fee', (done) => {
-      utility.testSend(web3, contractRyxEx, contractRyxExAddr, 'changeFeeTake', [feeTake.minus(new BigNumber(1)), { gas: 1000000, value: 0 }], accounts[1], undefined, 0, (err) => {
+      utility.testSend(web3, contractcoinEstate, contractcoinEstateAddr, 'changeFeeTake', [feeTake.minus(new BigNumber(1)), { gas: 1000000, value: 0 }], accounts[1], undefined, 0, (err) => {
         assert.equal(!err, false);
         done();
       });
     });
     it('Should change the take fee and succeed', (done) => {
-      utility.testSend(web3, contractRyxEx, contractRyxExAddr, 'changeFeeTake', [feeRebate.plus(new BigNumber(2)), { gas: 1000000, value: 0 }], admin, undefined, 0, (err) => {
+      utility.testSend(web3, contractcoinEstate, contractcoinEstateAddr, 'changeFeeTake', [feeRebate.plus(new BigNumber(2)), { gas: 1000000, value: 0 }], admin, undefined, 0, (err) => {
         assert.equal(err, undefined);
-        utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'feeTake', [], (err2, result2) => {
+        utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'feeTake', [], (err2, result2) => {
           assert.equal(result2.equals(feeRebate.plus(new BigNumber(2))), true);
           feeTake = result2;
           done();
@@ -771,27 +771,27 @@ describe('Test', function test() {
       });
     });
     it('Should change the rebate fee and fail', (done) => {
-      utility.testSend(web3, contractRyxEx, contractRyxExAddr, 'changeFeeRebate', [feeRebate, { gas: 1000000, value: 0 }], accounts[1], undefined, 0, (err) => {
+      utility.testSend(web3, contractcoinEstate, contractcoinEstateAddr, 'changeFeeRebate', [feeRebate, { gas: 1000000, value: 0 }], accounts[1], undefined, 0, (err) => {
         assert.equal(!err, false);
         done();
       });
     });
     it('Should change the rebate fee and fail because the rebate fee can only increase', (done) => {
-      utility.testSend(web3, contractRyxEx, contractRyxExAddr, 'changeFeeRebate', [feeRebate.div(2), { gas: 1000000, value: 0 }], accounts[1], undefined, 0, (err) => {
+      utility.testSend(web3, contractcoinEstate, contractcoinEstateAddr, 'changeFeeRebate', [feeRebate.div(2), { gas: 1000000, value: 0 }], accounts[1], undefined, 0, (err) => {
         assert.equal(!err, false);
         done();
       });
     });
     it('Should change the rebate fee and fail because the rebate fee must not exceed the take fee', (done) => {
-      utility.testSend(web3, contractRyxEx, contractRyxExAddr, 'changeFeeRebate', [feeTake.plus(new BigNumber(1)), { gas: 1000000, value: 0 }], accounts[1], undefined, 0, (err) => {
+      utility.testSend(web3, contractcoinEstate, contractcoinEstateAddr, 'changeFeeRebate', [feeTake.plus(new BigNumber(1)), { gas: 1000000, value: 0 }], accounts[1], undefined, 0, (err) => {
         assert.equal(!err, false);
         done();
       });
     });
     it('Should change the rebate fee and succeed', (done) => {
-      utility.testSend(web3, contractRyxEx, contractRyxExAddr, 'changeFeeRebate', [feeTake.minus(new BigNumber(1)), { gas: 1000000, value: 0 }], admin, undefined, 0, (err) => {
+      utility.testSend(web3, contractcoinEstate, contractcoinEstateAddr, 'changeFeeRebate', [feeTake.minus(new BigNumber(1)), { gas: 1000000, value: 0 }], admin, undefined, 0, (err) => {
         assert.equal(err, undefined);
-        utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'feeRebate', [], (err2, result2) => {
+        utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'feeRebate', [], (err2, result2) => {
           assert.equal(result2.equals(feeTake.minus(new BigNumber(1))), true);
           feeRebate = result2;
           done();
@@ -799,15 +799,15 @@ describe('Test', function test() {
       });
     });
     it('Should change the admin account and fail', (done) => {
-      utility.testSend(web3, contractRyxEx, contractRyxExAddr, 'changeAdmin', [accounts[1], { gas: 1000000, value: 0 }], accounts[1], undefined, 0, (err) => {
+      utility.testSend(web3, contractcoinEstate, contractcoinEstateAddr, 'changeAdmin', [accounts[1], { gas: 1000000, value: 0 }], accounts[1], undefined, 0, (err) => {
         assert.equal(!err, false);
         done();
       });
     });
     it('Should change the admin account and succeed', (done) => {
-      utility.testSend(web3, contractRyxEx, contractRyxExAddr, 'changeAdmin', [accounts[1], { gas: 1000000, value: 0 }], admin, undefined, 0, (err) => {
+      utility.testSend(web3, contractcoinEstate, contractcoinEstateAddr, 'changeAdmin', [accounts[1], { gas: 1000000, value: 0 }], admin, undefined, 0, (err) => {
         assert.equal(err, undefined);
-        utility.testCall(web3, contractRyxEx, contractRyxExAddr, 'admin', [], (err2, result2) => {
+        utility.testCall(web3, contractcoinEstate, contractcoinEstateAddr, 'admin', [], (err2, result2) => {
           assert.equal(result2 === accounts[1], true);
           admin = result2;
           done();
@@ -816,3 +816,4 @@ describe('Test', function test() {
     });
   });
 });
+
