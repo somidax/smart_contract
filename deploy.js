@@ -69,9 +69,9 @@ if (cliOptions.help) {
   web3.setProvider(new web3.providers.HttpProvider('http://localhost:8545'));
 
   // Config
-  const solidityFile = './smart_contract/ryxex.sol';
-  const contractName = 'RyxEx';
-  const solcVersion = 'v0.4.10+commit.f0d539ae';
+  const solidityFile = './smart_contract/coinEstate.sol';
+  const contractName = 'coinEstate';
+  const solcVersion = 'v0.4.21';
   const address = cliOptions.address;
   const admin = cliOptions.admin;
   const feeAccount = cliOptions.feeAccount;
