@@ -71,15 +71,15 @@ if (cliOptions.help) {
   // Config
   const solidityFile = './smart_contract/coinEstate.sol';
   const contractName = 'coinEstate';
-  const solcVersion = 'v0.4.21';
+  const solcVersion = '0.4.21';
   const address = cliOptions.address;
   const admin = cliOptions.admin;
   const feeAccount = cliOptions.feeAccount;
   const accountLevelsAddr = cliOptions.accountLevelsAddr;
-  const feeMake = 0;
-  const feeTake = 0;
+  const feeMake = 0.1;
+  const feeTake = 0.2;
   const feeRebate = 0;
-  const gas = 2000000;
+  const gas = 5000000;
   const args = [admin, feeAccount, accountLevelsAddr, feeMake, feeTake, feeRebate];
 
   solc.loadRemoteVersion(solcVersion, (err, solcV) => {
