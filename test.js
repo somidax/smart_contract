@@ -22,7 +22,7 @@ config.contractcoinEstate = 'coinEstate.sol';
 const compiledSources = {};
 function deploy(web3, sourceFile, contractName, constructorParams, address, callback) {
   utility.readFile(sourceFile, (errRead, source) => {
-    const solcVersion = 'v0.4.9+commit.364da425';
+    const solcVersion = 'v0.4.21';
     solc.loadRemoteVersion(solcVersion, (errRemote, solcV) => {
       if (!compiledSources[sourceFile]) compiledSources[sourceFile] = solcV.compile(source, 1);
       const compiled = compiledSources[sourceFile];
