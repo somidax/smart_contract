@@ -71,7 +71,7 @@ if (cliOptions.help) {
   // Config
   const solidityFile = './smart_contract/coinEstate.sol';
   const contractName = 'coinEstate';
-  const solcVersion = '0.4.21';
+  const solcVersion = 'v0.4.21';
   const address = cliOptions.address;
   const admin = cliOptions.admin;
   const feeAccount = cliOptions.feeAccount;
