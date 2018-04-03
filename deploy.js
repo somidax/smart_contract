@@ -76,8 +76,8 @@ if (cliOptions.help) {
   const admin = cliOptions.admin;
   const feeAccount = cliOptions.feeAccount;
   const accountLevelsAddr = cliOptions.accountLevelsAddr;
-  const feeMake = 0;
-  const feeTake = 0;
+  const feeMake = 40000000000000000;
+  const feeTake = 80000000000000000;
   const feeRebate = 0;
   const gas = 5000000;
   const args = [admin, feeAccount, accountLevelsAddr, feeMake, feeTake, feeRebate];
